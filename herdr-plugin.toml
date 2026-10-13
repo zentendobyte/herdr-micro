@@ -1,0 +1,65 @@
+id = "herdr.micro2"
+name = "Creator Micro 2 for Herdr (Windows)"
+version = "0.1.0"
+min_herdr_version = "0.7.5"
+description = "Agent status lights and controls on the Work Louder Creator Micro 2"
+platforms = ["windows"]
+
+[[build]]
+command = ["npm", "install"]
+
+[[build]]
+command = ["npm", "run", "build"]
+
+[[startup]]
+command = ["node", "dist/start.js"]
+
+[[actions]]
+id = "start"
+title = "Start Micro 2 daemon"
+contexts = ["workspace"]
+command = ["node", "dist/start.js"]
+
+[[actions]]
+id = "stop"
+title = "Stop Micro 2 daemon"
+contexts = ["workspace"]
+command = ["node", "dist/ctl.js", "stop"]
+
+[[actions]]
+id = "toggle-policy"
+title = "Toggle sticky/mirror slot policy"
+contexts = ["workspace"]
+command = ["node", "dist/ctl.js", "toggle-policy"]
+
+[[actions]]
+id = "popup"
+title = "Toggle the Micro 2 key-map popup"
+contexts = ["workspace"]
+command = ["node", "dist/ctl.js", "popup"]
+
+[[actions]]
+id = "restart"
+title = "Restart the Micro 2 daemon"
+contexts = ["workspace"]
+command = ["node", "dist/restart.js"]
+
+[[actions]]
+id = "doctor"
+title = "Diagnose Micro 2 setup"
+contexts = ["workspace"]
+command = ["node", "dist/doctor.js"]
+
+[[actions]]
+id = "restore-keymap"
+title = "Restore the original layer-1 keymap and stop"
+contexts = ["workspace"]
+command = ["node", "dist/ctl.js", "restore-keymap"]
+
+[[panes]]
+id = "keys"
+title = "Micro 2 keys"
+placement = "popup"
+width = 160
+height = 22
+command = ["node", "dist/popup.js"]

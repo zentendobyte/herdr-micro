@@ -1,0 +1,12 @@
+{
+  "_note": "Copy this file to %APPDATA%\\herdr\\plugins\\config\\herdr.micro2\\config.json (rename it to config.json). Unknown keys such as this one are ignored.",
+  "policy": "sticky",
+  "lighting_profile": 2,
+  "brightness": 100,
+  "rainbow_keys": true,
+  "bottom_rows": "solid",
+  "bottom_color": "#2277ff",
+  "bindings": {
+    "ACT07": "none"
+  }
+}

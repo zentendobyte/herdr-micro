@@ -1,0 +1,20 @@
+{
+  "name": "herdr-micro-win",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent status lights and controls on the Work Louder Creator Micro 2, for Herdr on Windows",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsc",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "test": "vitest run"
+  },
+  "engines": { "node": ">=22" },
+  "dependencies": { "koffi": "^3.3.3", "node-hid": "^3.4.0", "string-width": "^8.2.2" },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  },
+  "license": "MIT"
+}
