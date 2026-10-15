@@ -9,10 +9,20 @@
     "typecheck": "tsc -p tsconfig.test.json",
     "test": "vitest run"
   },
-  "engines": { "node": ">=22" },
-  "dependencies": { "koffi": "^3.3.3", "node-hid": "^3.4.0", "string-width": "^8.2.2" },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@types/omggif": "^1.0.5",
+    "koffi": "^3.3.3",
+    "node-hid": "^3.4.0",
+    "omggif": "^1.0.10",
+    "pngjs": "^7.0.0",
+    "string-width": "^8.2.2"
+  },
   "devDependencies": {
     "@types/node": "^22.20.1",
+    "@types/pngjs": "^6.0.5",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
   },

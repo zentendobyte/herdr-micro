@@ -40,6 +40,7 @@ overwrite it. Fix the reported error and the write succeeds.
   "policy": "sticky",
   "scroll_steps": 1,
   "dial_mode_order": ["workspaces", "agents", "scroll"],
+  "xpad_mode": "off",
   "bindings": {
     "<input>": <binding>
   }
@@ -59,6 +60,11 @@ where `<binding>` is one of:
 
 - `policy`: `"sticky"` (agents keep their key; default) or `"mirror"` (keys
   always match Herdr's attention priority order).
+- `xpad_mode`: drives a Pulsar XPAD Mini if one is plugged in. `"off"` (default),
+  `"worst"` (neediest agent), `"focused"` (the focused agent) or `"per-key"`
+  (its three keys show agents 1-3). Changeable from the popup's Lighting tab.
+- `xpad_art`: the XPAD's LCD artwork, `"clawd"` (default, built-in) or `"pixel"` (bundled pixel-art Clawd).
+  Changeable from the popup's Lighting tab (`a`).
 - `scroll_steps`: wheel steps sent per dial detent, an integer from 1 to 12
   (default 1). Higher values cover more transcript per click. Config reloads
   live, so this is safe to tune while testing.

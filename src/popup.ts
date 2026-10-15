@@ -12,6 +12,7 @@ import {
   type StatusPayload,
 } from "./control.js";
 import { BOTTOM_PALETTE, BOTTOM_ROWS_MODES, STATUS_COLORS } from "./lights.js";
+import { XPAD_ARTS, XPAD_MODES } from "./xpad/view.js";
 import { renderLightingTab, renderTabs, type Tab } from "./lighting-tab.js";
 
 const CELL = 36; // outer box width
@@ -132,6 +133,7 @@ function render(): void {
           status.lightingProfile,
           status.brightness,
           { mode: status.bottomRows, color: status.bottomColor },
+          { mode: status.xpadMode, connected: status.xpadConnected, art: status.xpadArt },
         ));
     } else {
       out.push(...renderRow(status.slots.slice(0, 2), [1, 2], TOP_INDENT));
@@ -176,6 +178,16 @@ process.stdin.on("data", (data) => {
   const key = data.toString("utf8");
   if (key === "q" || key === "\x1b" || key === "\x03") quit();
   if (key === "p") void sendCommand("toggle-policy").catch(() => {});
+  if (tab === "lighting" && status && key === "x") {
+    const modes = XPAD_MODES;
+    const mode = modes[(modes.indexOf(status.xpadMode) + 1) % modes.length];
+    void sendCommand("set-xpad", { mode }).catch(() => {});
+  }
+  if (tab === "lighting" && status && key === "a") {
+    const arts = XPAD_ARTS;
+    const art = arts[(arts.indexOf(status.xpadArt) + 1) % arts.length];
+    void sendCommand("set-xpad-art", { art }).catch(() => {});
+  }
   if (tab === "lighting" && status && key === "b") {
     const modes = BOTTOM_ROWS_MODES;
     const mode = modes[(modes.indexOf(status.bottomRows) + 1) % modes.length];

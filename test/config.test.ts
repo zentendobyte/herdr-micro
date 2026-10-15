@@ -8,7 +8,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), "codex-micro-config-"));
 process.env.HERDR_PLUGIN_CONFIG_DIR = dir;
 process.env.HERDR_PLUGIN_STATE_DIR = dir;
 
-const { CONFIG_FILE, loadConfig, savePolicy, saveLightingProfile, saveBrightness, saveBottomRows, saveBottomColor } =
+const { CONFIG_FILE, loadConfig, savePolicy, saveLightingProfile, saveBrightness, saveBottomRows, saveBottomColor, saveXpadMode, saveXpadArt } =
   await import("../src/config.js");
 
 const MALFORMED =
@@ -172,6 +172,23 @@ describe("lighting_profile", () => {
   it("the first-version rainbow_keys: false still turns the bottom rows off", () => {
     write(JSON.stringify({ rainbow_keys: false }));
     expect(loadConfig().bottomRows).toBe("off");
+  });
+
+  it("xpad_mode defaults to off, persists, and rejects unknown modes", () => {
+    expect(loadConfig().xpadMode).toBe("off");
+    saveXpadMode("per-key");
+    expect(loadConfig().xpadMode).toBe("per-key");
+    expect(JSON.parse(fs.readFileSync(CONFIG_FILE, "utf8")).xpad_mode).toBe("per-key");
+    write(JSON.stringify({ xpad_mode: "everything" }));
+    expect(() => loadConfig()).toThrow(/xpad_mode/);
+  });
+
+  it("xpad_art defaults to clawd, persists, and rejects unknown art", () => {
+    expect(loadConfig().xpadArt).toBe("clawd");
+    saveXpadArt("pixel");
+    expect(loadConfig().xpadArt).toBe("pixel");
+    write(JSON.stringify({ xpad_art: "neon" }));
+    expect(() => loadConfig()).toThrow(/xpad_art/);
   });
 
   it("saveLightingProfile writes a fresh config when none exists", () => {

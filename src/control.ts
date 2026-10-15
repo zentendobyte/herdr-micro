@@ -7,6 +7,7 @@ import { connect, readLines, requestLine } from "./socket.js";
 import type { DeviceState } from "./device.js";
 import type { DialMode } from "./dial.js";
 import type { BottomRows, LightingProfile } from "./lights.js";
+import type { XpadArt, XpadMode } from "./xpad/view.js";
 import type { AgentStatus, Policy } from "./slots.js";
 
 const WATCH_RECONNECT_MS = 1000;
@@ -36,6 +37,9 @@ export interface StatusPayload {
   brightness: number;
   bottomRows: BottomRows;
   bottomColor: number;
+  xpadMode: XpadMode;
+  xpadConnected: boolean;
+  xpadArt: XpadArt;
   configError: string | null;
   slots: (SlotStatus | null)[];
 }
@@ -49,6 +53,9 @@ export interface ControlHandlers {
   setBrightness(percent: unknown): number;
   /** Sets the bottom-row mode and/or solid colour; throws a readable Error on bad input. */
   setBottom(mode: unknown, color: unknown): { bottomRows: BottomRows; bottomColor: number };
+  /** Throws a readable Error for anything but off, worst, focused or per-key. */
+  setXpadMode(mode: unknown): XpadMode;
+  setXpadArt(art: unknown): XpadArt;
   /** Re-binds the keymap if it drifted and re-sends all lighting. */
   repush(): Promise<void>;
   popup(): void;
@@ -125,7 +132,7 @@ export class ControlServer {
 
   private handle(socket: net.Socket, line: string): void {
     let cmd: string;
-    let request: { cmd?: string; profile?: unknown; percent?: unknown; mode?: unknown; color?: unknown };
+    let request: { cmd?: string; profile?: unknown; percent?: unknown; mode?: unknown; color?: unknown; art?: unknown };
     try {
       request = JSON.parse(line) as {
         cmd?: string;
@@ -133,6 +140,7 @@ export class ControlServer {
         percent?: unknown;
         mode?: unknown;
         color?: unknown;
+        art?: unknown;
       };
       cmd = String(request.cmd ?? "");
     } catch {
@@ -162,6 +170,12 @@ export class ControlServer {
       } else if (cmd === "set-bottom") {
         const result = this.handlers.setBottom(request.mode, request.color);
         socket.write(JSON.stringify(result) + "\n");
+      } else if (cmd === "set-xpad") {
+        const xpadMode = this.handlers.setXpadMode(request.mode);
+        socket.write(JSON.stringify({ xpadMode }) + "\n");
+      } else if (cmd === "set-xpad-art") {
+        const xpadArt = this.handlers.setXpadArt(request.art);
+        socket.write(JSON.stringify({ xpadArt }) + "\n");
       } else if (cmd === "repush") {
         this.handlers.repush().then(
           () => socket.end(JSON.stringify({ ok: true }) + "\n"),

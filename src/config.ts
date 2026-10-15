@@ -12,6 +12,7 @@ import {
   type BottomRows,
   type LightingProfile,
 } from "./lights.js";
+import { XPAD_ARTS, XPAD_MODES, type XpadArt, type XpadMode } from "./xpad/view.js";
 import type { Policy } from "./slots.js";
 
 export const PLUGIN_ID = "herdr.micro2";
@@ -60,6 +61,10 @@ export interface Config {
   bottomRows: BottomRows;
   /** The solid colour (0xRRGGBB), written as "#rrggbb" in the file. */
   bottomColor: number;
+  /** Whether the XPAD Mini is driven, and which agent(s) it mirrors. */
+  xpadMode: XpadMode;
+  /** Which artwork the XPAD's LCD plays. */
+  xpadArt: XpadArt;
   /** Process names (no .exe) of the terminals Herdr may run in; an agent key raises one of their windows. */
   terminalProcesses: string[];
   /** Window-title fragments that identify Herdr's window; empty = derive from Herdr's workspace labels. */
@@ -81,6 +86,8 @@ export function loadConfig(): Config {
     brightness: resolveBrightness(raw.brightness),
     bottomRows: resolveBottomRows(raw.bottom_rows, raw.rainbow_keys),
     bottomColor: resolveBottomColor(raw.bottom_color),
+    xpadMode: resolveXpadMode(raw.xpad_mode),
+    xpadArt: resolveXpadArt(raw.xpad_art),
     terminalProcesses: resolveTerminalProcesses(raw.terminal_processes),
     terminalTitleContains: resolveTitleHints(raw.terminal_title_contains),
   };
@@ -108,6 +115,14 @@ export function saveBottomRows(mode: BottomRows): void {
 
 export function saveBottomColor(color: number): void {
   saveSetting("bottom_color", "#" + color.toString(16).padStart(6, "0"));
+}
+
+export function saveXpadMode(mode: XpadMode): void {
+  saveSetting("xpad_mode", mode);
+}
+
+export function saveXpadArt(art: XpadArt): void {
+  saveSetting("xpad_art", art);
 }
 
 function saveSetting(key: string, value: unknown): void {
@@ -232,6 +247,22 @@ function resolveBottomColor(value: unknown): number {
   throw new Error(
     `bottom_color: expected a colour like "#ffffff", got ${JSON.stringify(value)}`,
   );
+}
+
+// Off by default: the pad is optional hardware, and its vendor channels should
+// not be opened on machines that do not have one.
+function resolveXpadMode(value: unknown): XpadMode {
+  if (value === undefined) return "off";
+  if ((XPAD_MODES as readonly unknown[]).includes(value)) return value as XpadMode;
+  throw new Error(
+    `xpad_mode: expected "off", "worst", "focused" or "per-key", got ${JSON.stringify(value)}`,
+  );
+}
+
+function resolveXpadArt(value: unknown): XpadArt {
+  if (value === undefined) return "clawd";
+  if ((XPAD_ARTS as readonly unknown[]).includes(value)) return value as XpadArt;
+  throw new Error(`xpad_art: expected "clawd" or "pixel", got ${JSON.stringify(value)}`);
 }
 
 function resolveYieldTo(value: unknown): string[] {

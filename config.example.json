@@ -8,5 +8,7 @@
   "bottom_color": "#2277ff",
   "bindings": {
     "ACT07": "none"
-  }
+  },
+  "xpad_mode": "off",
+  "xpad_art": "clawd"
 }

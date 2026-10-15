@@ -13,6 +13,7 @@ import {
   type BottomLighting,
   type LightingProfile,
 } from "./lights.js";
+import { XPAD_ARTS, XPAD_MODES, type XpadArt, type XpadMode } from "./xpad/view.js";
 
 export type Tab = "keys" | "lighting";
 
@@ -46,6 +47,11 @@ export function renderLightingTab(
   active: LightingProfile,
   brightness = 100,
   bottom: BottomLighting = DEFAULT_BOTTOM,
+  xpad: { mode: XpadMode; connected: boolean; art: XpadArt } = {
+    mode: "off",
+    connected: false,
+    art: "clawd",
+  },
 ): string[] {
   const lines = [
     `  ${BOLD}Ring lighting${RESET}  ${DIM}the back strip and the border around the pad are one zone${RESET}`,
@@ -80,7 +86,23 @@ export function renderLightingTab(
   }
   lines.push("");
   lines.push(
-    `  ${DIM}1 / 2 / 3 select · + / - brightness · b bottom rows mode · ←/→ colour · r re-push keymap and lights · tab keys view · q close${RESET}`,
+    `  ${BOLD}XPAD Mini${RESET}    ` +
+      XPAD_MODES.map((mode) =>
+        mode === xpad.mode ? `${BOLD}[${mode}]${RESET}` : `${DIM} ${mode} ${RESET}`,
+      ).join(" ") +
+      (xpad.mode === "off"
+        ? ""
+        : `  ${xpad.connected ? "connected" : `${DIM}not found${RESET}`}`),
+  );
+  lines.push(
+    `  ${BOLD}XPAD art${RESET}     ` +
+      XPAD_ARTS.map((art) =>
+        art === xpad.art ? `${BOLD}[${art}]${RESET}` : `${DIM} ${art} ${RESET}`,
+      ).join(" "),
+    "",
+  );
+  lines.push(
+    `  ${DIM}1 / 2 / 3 select · + / - brightness · b bottom rows mode · ←/→ colour · x XPAD mode · a XPAD art · r re-push keymap and lights · tab keys view · q close${RESET}`,
   );
   return lines;
 }

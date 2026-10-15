@@ -47,6 +47,26 @@ The `restore-keymap` action puts layer 1 back and stops the daemon.
 Everything except the six agent keys is remappable; see [CONFIGURING.md](CONFIGURING.md). The input names
 `ACT06`-`ACT12` are upstream's; on the Micro 2 they are the keys after the first six, in reading order.
 
+## XPAD Mini (optional second pad)
+
+The plugin can also drive a Pulsar Lab **XPAD Mini** (its 13 LEDs and 240x135 LCD) from Herdr's agent
+status, alongside the Micro 2. Turn it on from the popup's Lighting tab (`x` cycles the mode) or set
+`xpad_mode` in `config.json`:
+
+| `xpad_mode` | The pad shows |
+|---|---|
+| `off` (default) | nothing; the pad is left alone |
+| `worst` | the neediest agent: blue scanning dot (working), flashing red (blocked), pulsing green (done), dark (idle), plus the matching Clawd animation on the LCD |
+| `focused` | the same, for whichever agent Herdr has focused |
+| `per-key` | the three keys show agents 1-3 (blue breathing, red, green, white), the bar and LCD show the worst state |
+
+The LCD plays the built-in Clawd by default. `xpad_art: "pixel"` (or `a` on the Lighting tab) switches to the
+pixel-art Clawd bundled in `assets/xpad-pixel/`; see NOTICE.md for its licensing.
+
+Either pad can be unplugged: each is found and reconnected on its own. The pad's keys are not touched.
+Quit the XPAD app (xpad-mini-claude-code) first if you run it, since only one program can drive the pad. Brightness
+from the Lighting tab applies to both pads.
+
 ## Ring lighting
 
 The popup has a **Lighting** tab (`tab` switches tabs) for the back strip and the border around the pad, which are

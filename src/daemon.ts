@@ -41,6 +41,8 @@ import {
   type Policy,
 } from "./slots.js";
 import { defaultBindings, type Bindings } from "./bindings.js";
+import { XpadHost } from "./xpad/host.js";
+import { XPAD_ARTS, XPAD_MODES, resolveXpadView, type XpadArt, type XpadMode } from "./xpad/view.js";
 import {
   CONFIG_DIR,
   STATE_DIR,
@@ -49,6 +51,8 @@ import {
   saveBrightness,
   saveBottomColor,
   saveBottomRows,
+  saveXpadArt,
+  saveXpadMode,
   saveLightingProfile,
   savePolicy,
   PLUGIN_ID,
@@ -116,6 +120,9 @@ class Daemon {
   private lastLighting = "";
   private lightingProfile: LightingProfile = 1;
   private brightness = 100;
+  private xpadMode: XpadMode = "off";
+  private xpadArt: XpadArt = "clawd";
+  private xpad = new XpadHost(log, () => this.control.broadcast());
   private bottom: BottomLighting = { ...DEFAULT_BOTTOM };
   private terminalProcesses: string[] = ["WindowsTerminal", "wezterm-gui"];
   private terminalTitleContains: string[] = [];
@@ -175,6 +182,9 @@ class Daemon {
       brightness: this.brightness,
       bottomRows: this.bottom.mode,
       bottomColor: this.bottom.color,
+      xpadMode: this.xpadMode,
+      xpadConnected: this.xpad.connected,
+      xpadArt: this.xpadArt,
       dialMode: this.controls.dialMode,
       dialModeOrder: this.dialModeOrder,
       state: this.yielded
@@ -195,6 +205,8 @@ class Daemon {
     setLightingProfile: (profile) => this.setLightingProfile(profile),
     setBrightness: (percent) => this.setBrightness(percent),
     setBottom: (mode, color) => this.setBottom(mode, color),
+    setXpadMode: (mode) => this.setXpadMode(mode),
+    setXpadArt: (art) => this.setXpadArt(art),
     repush: () => this.repush(),
     // Slot labels are resolved lazily; the arrival of a watcher is what makes
     // them worth fetching.
@@ -243,6 +255,9 @@ class Daemon {
         void this.pushLighting();
       }
       if (profileChanged || brightnessChanged) this.pushRing();
+      this.xpadMode = config.xpadMode;
+      this.xpadArt = config.xpadArt;
+      this.applyXpad();
       this.configError = null;
       if (initial) this.controls.resetDialMode();
       // A mode nothing can toggle anymore must not linger: without any
@@ -347,6 +362,7 @@ class Daemon {
       throw error;
     }
     this.brightness = next;
+    this.xpad.setBrightness(next);
     log(`brightness: ${next}%`);
     this.lastLighting = "";
     this.lastRing = "";
@@ -354,6 +370,72 @@ class Daemon {
     this.pushRing();
     this.control.broadcast();
     return next;
+  }
+
+  // Chosen from the popup Lighting tab: persisted, applied at once.
+  private setXpadMode(mode: unknown): XpadMode {
+    if (!(XPAD_MODES as readonly unknown[]).includes(mode)) {
+      throw new Error('xpad mode must be "off", "worst", "focused" or "per-key"');
+    }
+    const next = mode as XpadMode;
+    try {
+      saveXpadMode(next);
+    } catch (error) {
+      this.configError = (error as Error).message;
+      log(`xpad mode not saved: ${this.configError}`);
+      this.control.broadcast();
+      throw error;
+    }
+    this.xpadMode = next;
+    log(`xpad mode: ${next}`);
+    this.applyXpad();
+    this.control.broadcast();
+    return next;
+  }
+
+  private setXpadArt(art: unknown): XpadArt {
+    if (!(XPAD_ARTS as readonly unknown[]).includes(art)) {
+      throw new Error('xpad art must be "clawd" or "pixel"');
+    }
+    const next = art as XpadArt;
+    try {
+      saveXpadArt(next);
+    } catch (error) {
+      this.configError = (error as Error).message;
+      log(`xpad art not saved: ${this.configError}`);
+      this.control.broadcast();
+      throw error;
+    }
+    this.xpadArt = next;
+    log(`xpad art: ${next}`);
+    this.applyXpad();
+    this.control.broadcast();
+    return next;
+  }
+
+  // The XPAD Mini runs in its own worker and only while its mode is not off.
+  private applyXpad(): void {
+    if (this.xpadMode === "off") {
+      this.xpad.stop();
+      return;
+    }
+    this.xpad.setBrightness(this.brightness);
+    this.xpad.setArt(this.xpadArt);
+    this.xpad.start();
+    this.pushXpad();
+  }
+
+  // Independent of the Micro 2: a paused or yielded Micro does not blank this.
+  private pushXpad(): void {
+    if (this.xpadMode === "off" || this.stopping) return;
+    const agents = [...this.agents.values()].map((agent) => ({
+      status: agent.agent_status,
+      focused: agent.focused,
+    }));
+    const slots = this.slottedAgents().map(
+      (agent): AgentStatus | null => agent?.agent_status ?? null,
+    );
+    this.xpad.setView(resolveXpadView(this.xpadMode, agents, slots));
   }
 
   // Chosen from the popup Lighting tab: persisted, applied at once. Either
@@ -814,6 +896,7 @@ class Daemon {
   }
 
   private async pushLighting(): Promise<void> {
+    this.pushXpad();
     if (this.yielded || this.paused || this.stopping) return;
     const statuses = this.slottedAgents().map(
       (agent): AgentStatus | null => agent?.agent_status ?? null,
@@ -925,6 +1008,7 @@ class Daemon {
     // Once here and once more when the handle drops, because there may be no
     // live handle to drop.
     this.controls.resetInputState();
+    this.xpad.stop();
     await this.blankDevice();
     // Bounded: a wedged Herdr must not keep the device held hostage.
     await atMost(
